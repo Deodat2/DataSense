@@ -1,0 +1,8 @@
+pandas>=2.0
+numpy
+pyspark
+openpyxl
+torch
+torchaudio
+torchvision
+Pillow
