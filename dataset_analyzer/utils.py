@@ -17,12 +17,13 @@ from pathlib import Path
 import mimetypes
 import logging
 import hashlib
+from typing import Dict, Any, Union
 
 # Try to import python-magic for better MIME detection (optional dependency)
 try:
     import magic  # pip install python-magic
     _HAS_MAGIC = True
-except Exception:
+except (ImportError, ModuleNotFoundError):
     _HAS_MAGIC = False
 
 # Configure logger (used instead of print)
@@ -47,7 +48,11 @@ def human_readable_size(num_bytes: int) -> str:
 # ------------------------------------------------------------
 # Main function: fallback_summary
 # ------------------------------------------------------------
-def fallback_summary(file_path: str, compute_sha1: bool = False, use_magic: bool = False) -> dict[str, any]:
+def fallback_summary(
+        file_path: Union[str, Path],
+        compute_sha1: bool = False,
+        use_magic: bool = False
+) -> dict[str, any]:
     """
     Safely return basic metadata about a file.
 
@@ -71,7 +76,7 @@ def fallback_summary(file_path: str, compute_sha1: bool = False, use_magic: bool
               - error (str, optional): Present if an error occurred
     """
     p = Path(file_path)
-    info = {"path": str(p)}
+    info: Dict[str, Any] = {"path": str(p)}
 
     # --------------------------------------------------------
     # Step 1: Gather basic file system information

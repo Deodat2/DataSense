@@ -63,7 +63,13 @@ def _init_spark_quietly() -> None:
         # Avoid passing problematic submit args that break some Windows setups.
         # Do not set PYSPARK_SUBMIT_ARGS globally here.
         # Try importing PySpark — may raise if Java/GW not available.
-        from pyspark.sql import SparkSession
+        try:
+            from pyspark.sql import SparkSession
+        except ImportError:
+            _SPARK_AVAILABLE = False
+            _spark = None
+            logger.debug("PySpark is not installed or import failed.")
+            return  # Exit early if no PySpark
 
         # Create a small, quiet SparkSession; disable console progress UI
         _spark = (
@@ -92,10 +98,10 @@ def _init_spark_quietly() -> None:
         _SPARK_AVAILABLE = True
         logger.info("✅ PySpark initialized (quiet mode).")
     except Exception as e:
-        # Spark not available or failed to initialize — fallback to pandas-only
+        # Failed to initialize despite the import succeeding (e.g., Java issue)
         _SPARK_AVAILABLE = False
         _spark = None
-        logger.debug("PySpark not available: %s", e)
+        logger.debug("PySpark failed to initialize (check Java/gateway): %s", e)
 
 
 # Expose basic spark availability variable for other modules (read-only)
@@ -107,6 +113,8 @@ def _spark_session():
 
 
 # Threshold (bytes) to trigger Spark for very large structured files
+# TODO: Move to config/settings.py in a future iteration
+# from .config.settings import SPARK_THRESHOLD # Future import
 SPARK_THRESHOLD = 100_000_000  # 100 MB
 
 
@@ -141,7 +149,8 @@ def dataset_identity(
     try:
         # Initialize (quiet) Spark only when we need it
         spark = _spark_session()
-        use_spark_global = bool(_SPARK_AVAILABLE)
+        # use_spark_global is not strictly needed later if we check _SPARK_AVAILABLE
+        # use_spark_global = bool(_SPARK_AVAILABLE)
 
         recognized_files = {
             "csv": [],
@@ -171,9 +180,12 @@ def dataset_identity(
                 lt, classes = analyze_dataframe(path_or_df)
                 learning_types_global.append(lt)
                 record_file_summary("DataFrame", "tabular", lt, classes)
+                # Ensure the report includes total rows/cols for DataFrame
+                report_source = f"DataFrame ({path_or_df.shape[0]} rows)"
             except Exception as e:
                 logger.exception("Error analyzing DataFrame: %s", e)
-                return {}
+                # Return partial structure instead of empty dict for better debug info
+                return {"analyzed_source": "DataFrame", "error": str(e)}
 
         # -----------------------
         # Case: Path (file or folder)
@@ -226,7 +238,7 @@ def dataset_identity(
 
         report = {
             "analyzed_source": str(path_or_df) if not isinstance(path_or_df, pd.DataFrame) else "DataFrame",
-            "use_spark": bool(use_spark_global),
+            "use_spark": bool(_SPARK_AVAILABLE), # Use the module var
             "total_files": total_files,
             "recognized_files": {k: len(v) for k, v in recognized_files.items()},
             "non_recognized_files": [fallback_summary(f) for f in non_recognized_files],

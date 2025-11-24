@@ -14,7 +14,42 @@
 # ============================================================
 
 import pandas as pd
-from typing import List, Any
+from typing import List, Any, Dict, Tuple, Union
+
+
+# ------------------------------------------------------------
+# Internal Helper: Identify label candidates
+# ------------------------------------------------------------
+def _get_label_candidates(
+        df: pd.DataFrame,
+        threshold: float,
+        min_unique_abs: int
+) -> List[Dict[str, Any]]:
+    """Identifies columns that satisfy the cardinality and uniqueness thresholds."""
+
+    candidates = []
+    total_rows = len(df)
+
+    for col in df.columns:
+        # Use dropna=True for nunique to count only valid, non-missing entries
+        nunique = df[col].nunique(dropna=True)
+
+        if nunique < min_unique_abs:
+            continue
+
+        ratio = nunique / total_rows
+
+        if ratio < threshold:
+            # Compute missing value ratio
+            missing_ratio = df[col].isnull().mean()
+            candidates.append({
+                "column": col,
+                "unique_count": nunique,
+                "ratio": ratio,
+                "missing_ratio": missing_ratio
+            })
+
+    return candidates
 
 # ------------------------------------------------------------
 # 1️⃣ Detect label columns in DataFrame and infer learning type
@@ -46,27 +81,10 @@ def detect_labels_dataframe_smart(
     if df.empty:
         return "Unsupervised"
 
-    candidate_labels = []
-
     # ------------------------------------------------------------
     # Step 1: Identify candidate columns with low cardinality
     # ------------------------------------------------------------
-    for col in df.columns:
-        nunique = df[col].nunique(dropna=True)
-        # Skip columns with too few unique values (e.g., all same or empty)
-        if nunique < min_unique_abs:
-            continue
-
-        ratio = nunique / len(df)
-        if ratio < threshold:
-            # Compute missing value ratio
-            missing_ratio = df[col].isnull().mean()
-            candidate_labels.append({
-                "column": col,
-                "unique_count": nunique,
-                "ratio": ratio,
-                "missing_ratio": missing_ratio
-            })
+    candidate_labels = _get_label_candidates(df, threshold, min_unique_abs)
 
     # If no candidate columns found → Unsupervised learning
     if not candidate_labels:
@@ -109,14 +127,8 @@ def detect_classes_dataframe(
         return []
 
     # Step 1: Find all label candidates
-    candidate_labels = []
-    for col in df.columns:
-        nunique = df[col].nunique(dropna=True)
-        if nunique < min_unique_abs:
-            continue
-        ratio = nunique / len(df)
-        if ratio < threshold:
-            candidate_labels.append((col, ratio))
+    candidates_dicts = _get_label_candidates(df, threshold, min_unique_abs)
+    candidate_labels = [(c['column'], c['ratio']) for c in candidates_dicts]
 
     # Step 2: If no candidate → return empty
     if not candidate_labels:
@@ -125,12 +137,12 @@ def detect_classes_dataframe(
     # Step 3: Prefer column whose name suggests a label
     preferred_names = ["label", "target", "class", "classe", "category", "output", "y"]
     candidate_labels.sort(key=lambda x: x[1])  # smaller ratio first
+    chosen_col = candidate_labels[0][0]  # Default to the one with the lowest ratio
+
     for col, _ in candidate_labels:
         if any(p in col.lower() for p in preferred_names):
             chosen_col = col
             break
-    else:
-        chosen_col = candidate_labels[0][0]
 
     # Step 4: Return list of unique class values
     return list(df[chosen_col].dropna().unique())
@@ -139,7 +151,10 @@ def detect_classes_dataframe(
 # ------------------------------------------------------------
 # 3️⃣ Recursively find labels in a JSON structure
 # ------------------------------------------------------------
-def find_labels_json_recursive(obj: Any, candidate_keys: list[str] | None = None) -> list[Any]:
+def find_labels_json_recursive(
+        obj: Any,
+        candidate_keys: Union[List[str], None] = None
+) -> list[Any]:
     """
     Recursively search for label-like keys inside a JSON object.
 

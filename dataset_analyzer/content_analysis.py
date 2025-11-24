@@ -45,9 +45,9 @@ def analyze_dataframe(df: pd.DataFrame) -> Tuple[str, List[Any]]:
         classes = detect_classes_dataframe(df)
 
         return learning_type, classes
-    except Exception as e:
+    except Exception:
         # Fail-safe: handle any unexpected error gracefully
-        logger.exception(f"Error in analyze_dataframe: {e}")
+        logger.exception("Error occurred during DataFrame content analysis.")
         return "Unsupervised", []
 
 
@@ -87,9 +87,9 @@ def analyze_json(data: Any) -> Tuple[str, List[Any]]:
             classes = []
 
         return learning_type, classes
-    except Exception as e:
+    except Exception:
         # Fail-safe: avoid breaking the whole analysis if JSON is malformed
-        logger.exception(f"[Error] in analyze_json(): {e}")
+        logger.exception("Error occurred during JSON content analysis.")
         return "Unsupervised", []
 
 
@@ -108,13 +108,12 @@ def analyze_generic(data: Any) -> Tuple[str, List[Any]]:
         tuple:
             (str, list)
     """
-    import pandas as pd
 
     if isinstance(data, pd.DataFrame):
         return analyze_dataframe(data)
     elif isinstance(data, (dict, list)):
         return analyze_json(data)
     else:
-        logger.warning("[Warning] Unsupported data type for analysis.")
+        logger.warning("[Warning] Unsupported data type for analysis: %s", type(data))
         return "Unsupervised", []
 

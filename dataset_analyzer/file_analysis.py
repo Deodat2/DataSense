@@ -98,7 +98,7 @@ def _safe_read_json(path: str):
 # Phase 1: scan and group
 # -------------------------
 def scan_dataset(path: str) -> Dict[str, List[str]]:
-    grouped: Dict[str, List[str]] = {k: [] for k in EXT_GROUPS.keys()}
+    grouped: Dict[str, List[str]] = {t: [] for t in EXT_GROUPS.keys()}
     grouped["unknown"] = []
     for root, _, files in os.walk(path):
         for f in files:
@@ -140,7 +140,13 @@ def _process_json_group(filepaths: List[str], recognized_files, non_recognized_f
             logger.exception("JSON processing error: %s", p)
         _progress_bar(i, total, prefix="JSON")
 
-def _process_images_group(filepaths: List[str], recognized_files, non_recognized_files, learning_types_global, record_file_summary):
+def _process_images_group(
+        filepaths: List[str],
+        recognized_files,
+        non_recognized_files,
+        learning_types_global,
+        record_file_summary
+):
     total = len(filepaths)
     from .models.image_model import detect_image_class
     for i, p in enumerate(filepaths, 1):
@@ -153,9 +159,15 @@ def _process_images_group(filepaths: List[str], recognized_files, non_recognized
             logger.exception("Image processing error: %s", p)
         _progress_bar(i, total, prefix="Images")
 
-def _process_audio_group(filepaths: List[str], recognized_files, non_recognized_files, learning_types_global, record_file_summary):
+def _process_audio_group(
+        filepaths: List[str],
+        recognized_files,
+        non_recognized_files,
+        learning_types_global,
+        record_file_summary
+):
     total = len(filepaths)
-    from dataset_analyzer.models.audio_model import detect_audio_class
+    from .models.audio_model import detect_audio_class
     for i, p in enumerate(filepaths, 1):
         try:
             label = detect_audio_class(p) or "Indeterminate"
