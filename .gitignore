@@ -1,1 +1,52 @@
+# =======================================================
+# Git Ignore file for DataSense-Analyzer (Python/ML/Spark)
+# =======================================================
+
+# 1. Virtual Environments
+# Ignore standard virtual environment folders
+venv/
+env/
+.venv/
 /.idea
+
+# 2. Build and Distribution Files (created by 'python -m build')
+# The 'dist' folder containing .whl and .tar.gz files
+dist/
+build/
+*.egg-info/
+
+# 3. Cache and Metadata Files
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.DS_Store  # macOS metadata files
+.idea/     # IDE files (PyCharm/IntelliJ)
+*.bak
+
+# 4. Python Interpreter Files and Logs
+*.pyc
+*.log
+
+# 5. Machine Learning and Heavy Dependencies
+# Ignore downloaded model weights, checkpoints, etc.
+# These files are typically large (Gigabytes)
+/models/cache/
+*.pth
+*.pt
+/checkpoints/
+
+# 6. Spark and Big Data Output Files
+# Spark creates numerous temporary files and logs
+metastore_db/
+spark-warehouse/
+derby.log
+.hadoop/
+.spark-temp/
+pyspark_submit_staging/
+
+# 7. DataSense-Analyzer Output (Generated Reports)
+# Ignore locally generated analysis reports and artifacts
+report.json
+analysis_summary.json
+detailed_analysis.csv

@@ -44,22 +44,21 @@ def _progress_bar(current: int, total: int, prefix: str = ""):
     if total <= 0:
         return
 
-    # Longueur de la barre
+    # bar length
     bar_len = 40
 
-    # Calcul de la partie remplie
+    # filled length
     filled_len = int(bar_len * current / total)
 
-    # Partie verte =
+    # Green part =
     GREEN = "\033[92m"
     RESET = "\033[0m"
 
     bar = GREEN + "=" * filled_len + RESET + " " * (bar_len - filled_len)
 
-    # Affichage inline
     print(f"\r{prefix} [{bar}] {current}/{total}", end="", flush=True)
 
-    # Quand terminé, nouvelle ligne
+    # New line when finish
     if current == total:
         print()
 
