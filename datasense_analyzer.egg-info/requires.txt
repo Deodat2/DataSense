@@ -1,0 +1,18 @@
+pandas>=1.0.0
+tqdm>=4.0.0
+python-magic>=0.4.27
+
+[:python_version < "3.4"]
+pathlib
+
+[all]
+datasense-analyzer[ml,pyspark]
+
+[ml]
+torch>=1.10.0
+torchvision>=0.11.0
+torchaudio>=0.10.0
+Pillow>=9.0.0
+
+[pyspark]
+pyspark>=3.0.0

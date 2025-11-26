@@ -1,0 +1,65 @@
+# ============================================================
+# pyproject.toml pour DataSense-Lab
+# ============================================================
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datasense-analyzer"
+version = "0.5.0"
+description = "Automatic multimodal dataset analyzer (CSV, JSON, Images, Audio)."
+readme = "README.md"
+authors = [
+    {name = "Deodat AMEVOR", email = "deodatamevor0@gmail.com"},
+]
+license = {file = "LICENSE"}
+keywords = ["dataset", "analysis", "multimodal", "machine-learning"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+# Dépendances de base (obligatoires)
+dependencies = [
+    "pandas>=1.0.0",
+    "tqdm>=4.0.0",
+    "python-magic>=0.4.27",
+    "pathlib; python_version < '3.4'", # Pour les anciennes versions de Python
+]
+
+# Point d'entrée pour l'exécution en ligne de commande (votre main.py)
+[project.scripts]
+datasense = "dataset_analyzer.main:main"
+
+# Dépendances optionnelles (extras)
+[project.optional-dependencies]
+# Pour l'analyse des grands datasets structurés
+pyspark = [
+    "pyspark>=3.0.0"
+]
+# Pour l'analyse des fichiers multimodaux (images, audio)
+ml = [
+    "torch>=1.10.0",
+    "torchvision>=0.11.0",
+    "torchaudio>=0.10.0",
+    "Pillow>=9.0.0" # Utilisé par torchvision/PIL
+]
+# Pour installer toutes les dépendances
+all = [
+    "datasense-analyzer[pyspark, ml]"
+]
+
+# Configuration pour setuptools (pour inclure les données du package)
+[tool.setuptools.package-data]
+"dataset_analyzer.models" = ["imagenet_classes.txt"]
+
+# Définition des packages
+[tool.setuptools.packages]
+find = {include = ["dataset_analyzer", "dataset_analyzer.*"]}
